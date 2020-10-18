@@ -70,7 +70,10 @@ module GvcsFx
           sel = @tblChanges.selection_model.selected_items
           if sel.length > 0
             sel.each do |s|
-              view_file(s.path)
+              fullPath = File.join(@selWs.path,s.path.strip)
+              if not File.directory?(fullPath)
+                view_file(s.path)
+              end
             end
           end
 
@@ -154,14 +157,31 @@ module GvcsFx
       raise_if_empty(selected, "No file given to commit", GvcsFxException)  
       raise_if_empty(msg, "No message given to commit", GvcsFxException)  
 
+      @emptyDirCommit = []
       selected.each do |f|
         begin
-          @selWs.add(f.path)
+          fullPath = File.join(@selWs.path,f.path.strip)
+          if File.directory?(fullPath)
+            # check if the directory is empty...
+            if Dir.entries(fullPath).length == 2
+              # empty!
+              keepPath = File.join(fullPath,".keep")
+              FileUtils.touch keepPath
+
+              @selWs.add(keepPath)
+              @emptyDirCommit << File.join(f.path.strip,".keep")
+            else
+              @selWs.add(f.path)
+            end
+          else
+            @selWs.add(f.path) 
+          end
         rescue Exception => ex
           log_error "Error while GVCS add to staging operation:"
           log_error ex.message
+          log_error ex.backtrace.join("\n")
           begin
-            @selWs.remove_from_staging(f.path)
+            @selWs.remove_from_staging(f.path.strip)
           rescue Exception; end
         end
       end
@@ -172,7 +192,11 @@ module GvcsFx
         begin
           selected.each do |f|
             # this is unique because the GUI is grouping add and commit in single operation
-            @selWs.remove_from_staging(f.path)
+            @selWs.remove_from_staging(f.path.strip)
+          end
+
+          @emptyDirCommit.each do |pa|
+            @selWs.remove_from_staging(pa)
           end
         rescue Exception; end
       end
