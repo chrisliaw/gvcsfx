@@ -158,6 +158,7 @@ module GvcsFx
       raise_if_empty(msg, "No message given to commit", GvcsFxException)  
 
       @emptyDirCommit = []
+      @processed = []
       selected.each do |f|
         begin
           fullPath = File.join(@selWs.path,f.path.strip)
@@ -172,35 +173,55 @@ module GvcsFx
               @emptyDirCommit << File.join(f.path.strip,".keep")
             else
               @selWs.add(f.path)
+              @processed << f.path.strip
             end
           else
             @selWs.add(f.path) 
+            @processed << f.path.strip
           end
         rescue Exception => ex
           log_error "Error while GVCS add to staging operation:"
           log_error ex.message
           log_error ex.backtrace.join("\n")
-          begin
-            @selWs.remove_from_staging(f.path.strip)
-          rescue Exception; end
+          reset_add_commit_error(@processed,@emptyDirCommit)
         end
       end
 
       begin
-        @selWs.commit(msg)
-      rescue Exception => ex
-        begin
-          selected.each do |f|
-            # this is unique because the GUI is grouping add and commit in single operation
-            @selWs.remove_from_staging(f.path.strip)
-          end
-
-          @emptyDirCommit.each do |pa|
-            @selWs.remove_from_staging(pa)
-          end
-        rescue Exception; end
+        cst, res = @selWs.commit(msg)
+        if !cst
+          reset_add_commit_error(@processed,@emptyDirCommit)
+          fx_alert_error("Error while committing changes. Error was:\n#{res.strip}", "Commit Error", GvcsFxException)
+        end
+      rescue Exception => ex;
+        reset_add_commit_error(@processed,@emptyDirCommit)
       end
     end
+
+    def reset_add_commit_error(files, emptyFolders = [])
+
+      if not_empty?(files)
+        files.each do |f|
+          begin
+            @selWs.remove_from_staging(f)
+          rescue Exception => ex
+            log_error "Exception while removing file from staging. Error was: "
+            log_error ex.message
+            log_error ex.backtrace[0..5].join("\n")
+          end
+        end
+      end
+
+      if not_empty?(emptyFolders)
+        emptyFolders.each do |f|
+          @selWs.remove_from_staging(f)
+          # not removing the created .keep file because it is an exception case
+          # Exception case doesn't mean the intention to check in the directory is incorrect.
+          # the intention to check in still there therefore the .keep file shall remain
+        end
+      end
+      
+    end # reset_add_commit_error
 
     def view_file(path)
 
