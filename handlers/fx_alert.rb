@@ -8,7 +8,10 @@ module GvcsFx
       dlg = Alert.new(Alert::AlertType::INFORMATION)
       #dlg.header_text = msg
       dlg.title = title
-      dlg.content_text = msg
+      lbl = javafx.scene.control.Label.new(msg)
+      lbl.wrap_text = true
+      dlg.dialog_pane.content = lbl
+      #dlg.content_text = msg
       dlg.init_modality(javafx.stage.Modality::WINDOW_MODAL)
       dlg.init_owner(owner) if not owner.nil?
       dlg.show_and_wait
@@ -18,7 +21,10 @@ module GvcsFx
       dlg = Alert.new(Alert::AlertType::ERROR)
       #dlg.header_text = msg
       dlg.title = title
-      dlg.content_text = msg
+      lbl = javafx.scene.control.Label.new(msg)
+      lbl.wrap_text = true
+      dlg.dialog_pane.content = lbl
+      #dlg.content_text = msg
       dlg.init_modality(javafx.stage.Modality::WINDOW_MODAL)
       dlg.init_owner(owner) if not owner.nil?
       dlg.show_and_wait
@@ -27,7 +33,10 @@ module GvcsFx
     def fx_alert_warning(msg, title = "Warning", owner = nil)
       dlg = Alert.new(Alert::AlertType::WARN)
       #dlg.header_text = msg
-      dlg.content_text = msg
+      lbl = javafx.scene.control.Label.new(msg)
+      lbl.wrap_text = true
+      dlg.dialog_pane.content = lbl
+      #dlg.content_text = msg
       dlg.title = title
       dlg.init_modality(javafx.stage.Modality::WINDOW_MODAL)
       dlg.init_owner(owner) if not owner.nil?
