@@ -11,6 +11,7 @@ module GvcsFx
       lbl = javafx.scene.control.Label.new(msg)
       lbl.wrap_text = true
       dlg.dialog_pane.content = lbl
+      dlg.header_text = nil
       #dlg.content_text = msg
       dlg.init_modality(javafx.stage.Modality::WINDOW_MODAL)
       dlg.init_owner(owner) if not owner.nil?
@@ -24,9 +25,10 @@ module GvcsFx
       lbl = javafx.scene.control.Label.new(msg)
       lbl.wrap_text = true
       dlg.dialog_pane.content = lbl
-      #dlg.content_text = msg
+      dlg.header_text = nil
       dlg.init_modality(javafx.stage.Modality::WINDOW_MODAL)
       dlg.init_owner(owner) if not owner.nil?
+      #dlg.init_style(javafx.stage.StageStyle::UTILITY)
       dlg.show_and_wait
     end
 
@@ -38,6 +40,7 @@ module GvcsFx
       dlg.dialog_pane.content = lbl
       #dlg.content_text = msg
       dlg.title = title
+      dlg.header_text = nil
       dlg.init_modality(javafx.stage.Modality::WINDOW_MODAL)
       dlg.init_owner(owner) if not owner.nil?
       dlg.show_and_wait
