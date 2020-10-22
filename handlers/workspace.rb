@@ -143,6 +143,7 @@ module GvcsFx
             Global.instance.storage.remove_workspace(s)
             Global.instance.storage.store
             refresh_workspace_list
+            refresh_details
             log_debug "Workspace '#{s}' removed from management"
           else
             puts "Abort!"
