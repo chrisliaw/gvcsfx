@@ -61,24 +61,40 @@ module GvcsFx
 
       @tblChanges.selection_model.selection_mode = javafx.scene.control.SelectionMode::MULTIPLE
 
+      # mouse event
       @tblChanges.add_event_handler(javafx.scene.input.MouseEvent::MOUSE_CLICKED, Proc.new do |evt|
         if evt.button == javafx.scene.input.MouseButton::SECONDARY
           # right click on item
           changes_ctxmenu.show(@tblChanges, evt.screen_x, evt.screen_y)
         elsif evt.button == javafx.scene.input.MouseButton::PRIMARY and evt.click_count == 2
-          # double click on item - view file
+          # double click on item - diff file
           sel = @tblChanges.selection_model.selected_items
           if sel.length > 0
             sel.each do |s|
-              fullPath = File.join(@selWs.path,s.path.strip)
-              if not File.directory?(fullPath)
-                view_file(s.path)
+              st, res = @selWs.diff_file(s.path)
+              if st
+
+                javafx.application.Platform.run_later do
+                  stage = javafx.stage.Stage.new
+                  stage.title = "Diff Output"
+                  stage.initModality(javafx.stage.Modality::WINDOW_MODAL)
+                  #stage.initOwner(main_stage)
+                  dlg = ShowTextController.load_into(stage)
+                  dlg.set_title("Diff Result - #{s.path}")
+                  dlg.set_content(res)
+                  stage.showAndWait
+
+                end # run_later
+
+              else
+                set_err_gmsg("Diff for '#{s.path}' failed. [#{res}]")
               end
+
             end
           end
 
         end
-      end)
+      end) # end mouse event
 
     end
 
@@ -191,7 +207,8 @@ module GvcsFx
         cst, res = @selWs.commit(msg)
         if !cst
           reset_add_commit_error(@processed,@emptyDirCommit)
-          fx_alert_error("Error while committing changes. Error was:\n#{res.strip}", "Commit Error", GvcsFxException)
+          #fx_alert_error("Error while committing changes. Error was:\n#{res.strip}", "Commit Error", GvcsFxException)
+          set_err_gmsg("Error while committing changes. Error was:\n#{res.strip}")
         end
       rescue Exception => ex;
         reset_add_commit_error(@processed,@emptyDirCommit)
@@ -243,108 +260,158 @@ module GvcsFx
 
     def changes_ctxmenu
 
-      if @changesCtxMenu.nil?
+      @selChanges = @tblChanges.selection_model.selected_items
 
-        @changesCtxMenu = javafx.scene.control.ContextMenu.new
-        
-        diffMnuItm = javafx.scene.control.MenuItem.new("Diff")
-        diffMnuItm.on_action do |evt|
 
-          sel = @tblChanges.selection_model.selected_items
-          if sel.length > 0
-            sel.each do |s|
+      @changesCtxMenu = javafx.scene.control.ContextMenu.new
 
-              st, res = @selWs.diff_file(s.path)
-              if st
-                javafx.application.Platform.run_later do
-                  stage = javafx.stage.Stage.new
-                  stage.title = "Diff Output"
-                  stage.initModality(javafx.stage.Modality::WINDOW_MODAL)
-                  #stage.initOwner(main_stage)
-                  dlg = ShowTextController.load_into(stage)
-                  dlg.set_title("Diff Result - #{s.path}")
-                  dlg.set_content(res)
-                  stage.showAndWait
-                end
+      if @selChanges.length > 0
 
-              end
+        # 
+        # View file menu item
+        #
+        vfMnuItm = javafx.scene.control.MenuItem.new("View file")
+        vfMnuItm.on_action do |evt|
 
+          @selChanges.each do |s|
+
+            fullPath = File.join(@selWs.path,s.path.strip)
+            if not File.directory?(fullPath)
+              view_file(s.path)
             end
+
           end
 
         end
-        @changesCtxMenu.items.add(diffMnuItm)
+        @changesCtxMenu.items.add(vfMnuItm)
+        # 
+        # end diff menu item
+        #
 
-        #viewMnuItm = javafx.scene.control.MenuItem.new("View")
-        #viewMnuItm.on_action do |evt|
-        #  puts "View"
-        #end
-        #@changesCtxMenu.items.add(viewMnuItm)
-
+        # 
+        # Remove from VCS
+        #
         @changesCtxMenu.items.add(javafx.scene.control.SeparatorMenuItem.new)
 
         rmvVcsMnuItm = javafx.scene.control.MenuItem.new("Remove from VCS")
         rmvVcsMnuItm.on_action do |evt|
 
-          sel = @tblChanges.selection_model.selected_items
-          if sel.length > 0
-            sel.each do |s|
-              @selWs.remove_from_vcs(s.path)
-              @selWs.ignore(s.path)
-            end
+          @selChanges.each do |s|
+            @selWs.remove_from_vcs(s.path)
+            @selWs.ignore(s.path)
 
-            refresh_vcs_status(nil)
+            set_info_gmsg("File '#{s.path}' removed from VCS")
           end
-          
+
+          refresh_vcs_status(nil)
+
         end
         @changesCtxMenu.items.add(rmvVcsMnuItm)
+        # 
+        # end remove from VCS
+        #
 
-        delMnuItm = javafx.scene.control.MenuItem.new("Delete physical file")
-        delMnuItm.on_action do |evt|
-          puts "Del physical file"
-        end
-        @changesCtxMenu.items.add(delMnuItm)
+        #delMnuItm = javafx.scene.control.MenuItem.new("Delete physical file")
+        #delMnuItm.on_action do |evt|
+        #  puts "Del physical file"
+        #end
+        #@changesCtxMenu.items.add(delMnuItm)
 
         @changesCtxMenu.items.add(javafx.scene.control.SeparatorMenuItem.new)
 
+        # 
+        # Add to ignore list
+        #
         ignMnuItm = javafx.scene.control.MenuItem.new("Add to ignore list")
         ignMnuItm.on_action do |evt|
 
-          sel = @tblChanges.selection_model.selected_items
-          if sel.length > 0
-            igPat = []
-            sel.each do |s|
-              igPat << s.path
+          igPat = []
+          @selChanges.each do |s|
+            fullPath = File.join(@selWs.path, s.path)
+            if File.directory?(fullPath)
+
+              res = fx_alert_confirmation("Add folder '#{s.path}' to ignore list?\nAll changes under this folder shall be ignored if done so.", nil, "Confirmation to Ignore Directory", main_stage)
+              if res == :ok
+                # is the folder already in version control?
+                if s.is_a?(NewFile)
+                  igPat << s.path
+                elsif s.is_a?(DeletedFile)
+                  fx_alert_info("Folder '#{s.path}' is marked deleted but not yet committed.\nIf you wish to ignore this folder, please commit the changes first and select Add to ignore list again to ignore this folder.")
+                elsif s.is_a?(ModifiedFile)
+                  res = fx_alert_confirmation("Folder being ignored is already tracked under the VCS.\nRemove folder from VCS and put it under ignore rule?", nil, "Confirmation to Ignore Tracked Folder", main_stage)
+                  if res == :ok
+                    @selWs.remove_from_vcs(s.path)
+                    igPat << s.path
+                  end
+                end
+
+              end
+
+            else
+              # is the file already in version control?
+              if s.is_a?(NewFile)
+                igPat << s.path
+              elsif s.is_a?(DeletedFile)
+                  fx_alert_info("File '#{s.path}' is marked deleted but not yet committed.\nIf you wish to ignore this file, please commit the changes first and select Add to ignore list again to ignore this file.")
+              elsif s.is_a?(ModifiedFile)
+                res = fx_alert_confirmation("File being ignored is already tracked under the VCS.\nRemove file from VCS and put it under ignore rule?", nil, "Confirmation to Ignore Tracked File", main_stage)
+                if res == :ok
+                  @selWs.remove_from_vcs(s.path)
+                  igPat << s.path
+                end
+              end
+
             end
+          end
 
-            cnt = igPat.join("\n")
-            @selWs.ignore(cnt)
+          cnt = igPat.join("\n")
+          st, res = @selWs.ignore(cnt)
 
+          if st
             refresh_vcs_status(nil)
+          else
+            set_err_gmsg("Add to ignore list for '#{igPat.join(",")}' failed. [#{res}]")
           end
 
         end
         @changesCtxMenu.items.add(ignMnuItm)
+        #
+        # end Add to ignore list
+        #
 
+        # 
+        # Add extension to ignore list
+        #
         ignExtMnuItm = javafx.scene.control.MenuItem.new("Add extension to ignore list")
         ignExtMnuItm.on_action do |evt|
-          sel = @tblChanges.selection_model.selected_items
-          if sel.length > 0
-            igPat = []
-            sel.each do |s|
+
+          igPat = []
+          @selChanges.each do |s|
+            fullPath = File.join(@selWs.path, s.path)
+            if File.directory?(fullPath)
+              fx_alert_warning("Given file '#{s.path}' to add extension to ignore list is a folder.\nPlease use 'Add to ignore list' option if indeed that is the intention.","Folder has no extension",main_stage)
+            else
               igPat << "*#{File.extname(s.path)}"
             end
+          end
 
-            cnt = igPat.join("\n")
-            @selWs.ignore(cnt)
+          cnt = igPat.join("\n")
+          st, res = @selWs.ignore(cnt)
 
+          if st
             refresh_vcs_status(nil)
+          else
+            set_err_gmsg("Add extension '#{igPat.join(",")}' to ignore list failed. [#{res}]")
           end
 
         end
         @changesCtxMenu.items.add(ignExtMnuItm)
+        #
+        # end Add extension to ignore list
+        #
 
       end
+
 
       @changesCtxMenu 
       
