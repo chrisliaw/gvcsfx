@@ -1,4 +1,7 @@
 *.log
 Gemfile.lock
 
-fx/.jrubyfx_cache/*
+
+
+
+fx/.jrubyfx_cache/
