@@ -11,5 +11,9 @@ module GvcsFx
       @txtIgnoreRules.text = @selWs.ignore_rules  
     end
 
+    def on_save_ignore_rules(evt)
+      @selWs.update_ignore_rules(@txtIgnoreRules.text)   
+    end
+
   end
 end
