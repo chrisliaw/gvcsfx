@@ -5,12 +5,12 @@ module GvcsFx
 
     def install_handler
       handle_workspace_add
-      handle_workspace_selected
+      handle_workspace_selection_changed
     end
 
     def handle_workspace_add
 
-      register(Notifier::Event[:workspace_added], Proc.new do |opts|
+      register(Listener::Event[:workspace_added], Proc.new do |opts|
 
         # change display from landing to details
         show_details
@@ -20,8 +20,8 @@ module GvcsFx
 
     end
 
-    def handle_workspace_selected
-      register(Notifier::Event[:workspace_selected], Proc.new do |opts|
+    def handle_workspace_selection_changed
+      register(Listener::Event[:workspace_selection_changed], Proc.new do |opts|
 
         refresh_details
 
