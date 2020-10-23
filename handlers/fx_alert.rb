@@ -33,7 +33,7 @@ module GvcsFx
     end
 
     def fx_alert_warning(msg, title = "Warning", owner = nil)
-      dlg = Alert.new(Alert::AlertType::WARN)
+      dlg = Alert.new(Alert::AlertType::WARNING)
       #dlg.header_text = msg
       lbl = javafx.scene.control.Label.new(msg)
       lbl.wrap_text = true
