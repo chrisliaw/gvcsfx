@@ -15,7 +15,8 @@ require_relative "tab_repos"
 require_relative "tab_logs"
 require_relative "tab_ignore_rules"
 
-require_relative "notifier"
+require_relative "listener"
+require_relative "notification"
 require_relative "event_handler"
 
 require_relative '../lib/log_helper'
@@ -38,8 +39,10 @@ module GvcsFx
     include GvcsFx::TabLogs
     include GvcsFx::TabIgnoreRules
 
-    include GvcsFx::Notifier
+    include GvcsFx::Listener
     include GvcsFx::EventHandler
+
+    include GvcsFx::Notification
 
 
     def initialize
@@ -51,6 +54,7 @@ module GvcsFx
       init_tab_ignore_rules
 
       init_tab_repos
+      init_tab_branches
 
       show_landing
     end
@@ -77,43 +81,48 @@ module GvcsFx
       ##p evt.target.methods.sort
       #p evt.target.text
 
-      if evt.target.text == "State"
-        refresh_tab_state
-        @shownTab = :state
-      elsif evt.target.text == "Logs"
-        refresh_tab_logs
-        @shownTab = :logs
-      elsif evt.target.text == "Ignore Rules"
-        refresh_tab_ignore_rules
-        @shownTab = :ignoreRules
-      elsif evt.target.text == "Branches"
-        refresh_tab_branches
-        @shownTab = :branches
-      elsif evt.target.text == "Tags"
-        refresh_tab_tags
-        @shownTab = :tags
-      elsif evt.target.text == "Repository"
-        refresh_tab_repos
-        @shownTab = :repos
+      javafx.application.Platform.run_later do
+
+        # only update whatever tab that is visible right now
+        if evt.target.text == "State"
+          refresh_tab_state
+        elsif evt.target.text == "Logs"
+          refresh_tab_logs
+        elsif evt.target.text == "Ignore Rules"
+          refresh_tab_ignore_rules
+        elsif evt.target.text == "Branches"
+          refresh_tab_branches
+        elsif evt.target.text == "Tags"
+          refresh_tab_tags
+        elsif evt.target.text == "Repository"
+          refresh_tab_repos
+        end
+
+        reset_gmsg
       end
     end
 
+    # refresh the whole bottom tabs
     def refresh_details
 
-      case @shownTab
-      when :state
+      currTab = @tabPnlDetails.selection_model.selected_item
+      case currTab.text
+      when "State"
         refresh_tab_state
-      when :logs
+      when "Logs"
         refresh_tab_logs
-      when :ignoreRules
+      when "Ignore Rules"
         refresh_tab_ignore_rules
-      when :branches
+      when "Branches"
         refresh_tab_branches
-      when :tags
+      when "Tags"
         refresh_tab_tags
-      when :repos
+      when "Repository"
         refresh_tab_repos
       end
+
+      reset_gmsg
+
       # refresh state
       # refresh branch
       # refresh tags
@@ -128,6 +137,10 @@ module GvcsFx
       rescue Exception => ex
         raise GvcsFxException, ex
       end
+    end
+
+    def inside_jar?
+      File.dirname(__FILE__)[0..3] == "uri:"
     end
 
   end
