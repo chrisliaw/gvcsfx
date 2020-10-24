@@ -55,6 +55,7 @@ module GvcsFx
 
       init_tab_repos
       init_tab_branches
+      init_tab_tags
 
       show_landing
     end
@@ -141,6 +142,22 @@ module GvcsFx
 
     def inside_jar?
       File.dirname(__FILE__)[0..3] == "uri:"
+    end
+
+    def show_content_win(stageTitle, dlgTitle, content)
+
+      javafx.application.Platform.run_later do
+        stage = javafx.stage.Stage.new
+        stage.title = stageTitle
+        stage.initModality(javafx.stage.Modality::WINDOW_MODAL)
+        #stage.initOwner(main_stage)
+        dlg = ShowTextController.load_into(stage)
+        dlg.set_title(dlgTitle)
+        dlg.set_content(content)
+        stage.showAndWait
+
+      end # run_later
+
     end
 
   end
