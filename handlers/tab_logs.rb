@@ -6,6 +6,7 @@ module GvcsFx
 
     class VcsLog
       include Antrapol::ToolRack::ExceptionUtils
+      include javafx.beans.value.ObservableValue
 
       attr_accessor :key, :date, :author_name, :author_email, :subject, :body, :notes
       def reformatted_date
@@ -17,22 +18,31 @@ module GvcsFx
         end
       end
 
+      def addListener(list)
+      end
+
+      def removeListener(list)
+      end
+
+      def value
+        self
+      end
+
     end # VcsLog
 
     class LogCellFactory < javafx.scene.control.TableCell
-      attr_accessor :cell_data
+      attr_accessor :tableColumn
       def updateItem(itm,e)
         super
-        p @cell_data
-        p @cell_data.getCellData(0)
-        if not @cell_data.nil?
-          dat = @cell_data.getCellData(0)
+        if not itm.nil?
           d = []
-          d << "Commit : #{dat.key}"
-          d << dat.subject
-          lbl = javafx.scene.control.Label.new(d.join("\n"))
-          lbl.wrap_text = true
-          self.graphic = lbl
+          d << "Commit : #{itm.key}\n"
+          d << "#{itm.subject}"
+          lbl = javafx.scene.text.Text.new(d.join("\n"))
+          lbl.wrappingWidthProperty.bind(@tableColumn.widthProperty)
+          setGraphic(lbl)
+        else
+          setGraphic(nil)
         end
       end
     end
@@ -49,45 +59,26 @@ module GvcsFx
       colDate.cell_value_factory = Proc.new do |p|
         SimpleStringProperty.new(p.value.reformatted_date)
       end
+      colDate.sortable = false
       cols << colDate
       
       colSubj = TableColumn.new("Subject")
-      #colSubj.cell_value_factory = Proc.new do |p|
-      #  javafx.beans.property.SimpleObjectProperty.new(p.value)
-      #  #p.value.subject
-      #end
       colSubj.cell_value_factory = Proc.new do |p|
-        st = []
-        st << "Commit : #{p.value.key}"
-        st << p.value.subject
-        #txt = javafx.scene.text.Text.new(st.join("\n"))
-        SimpleStringProperty.new(st.join("\n"))
+        p.value
       end
-      #colSubj.cell_factory = Proc.new do |pa|
-      #  p pa.methods.sort
-      #  p pa.user_data
-      #  tc = javafx.scene.control.TableCell.new
-      #  st = []
-      #  st << "Commit : #{pa.value.key}"
-      #  st << pa.value.subject
-      #  lbl = javafx.scene.control.Label.new(st.join("\n"))
-      #  lbl.wrap_text = true
-      #  tc.graphic = lbl
-      #  tc
-      #end
-      #colSubj.cell_factory = Proc.new do |col|
-      #  lc = LogCellFactory.new
-      #  lc.cell_data = col
-      #  p lc
-      #  lc
-      #end
-
+      colSubj.cell_factory = Proc.new do |pa|
+        cell = LogCellFactory.new
+        cell.tableColumn = pa
+        cell
+      end
+      colSubj.sortable = false
       cols << colSubj
 
       colAuthor = TableColumn.new("Committer")
       colAuthor.cell_value_factory = Proc.new do |p|
         SimpleStringProperty.new(p.value.author_name)
       end
+      colAuthor.sortable = false
       cols << colAuthor
 
 
@@ -105,22 +96,41 @@ module GvcsFx
       colAuthor.max_width = colAuthor.pref_width
       colAuthor.min_width = colAuthor.pref_width
 
-      #@tblLogs.selection_model.selection_mode = javafx.scene.control.SelectionMode::MULTIPLE
+      @tblLogs.selection_model.selection_mode = javafx.scene.control.SelectionMode::SINGLE
 
       @tblLogs.add_event_handler(javafx.scene.input.MouseEvent::MOUSE_CLICKED, Proc.new do |evt|
-        #if evt.button == javafx.scene.input.MouseButton::SECONDARY
-        #  # right click on item
-        #  changes_ctxmenu.show(@tblChanges, evt.screen_x, evt.screen_y)
-        #elsif evt.button == javafx.scene.input.MouseButton::PRIMARY and evt.click_count == 2
-        #  # double click on item - view file
-        #  sel = @tblChanges.selection_model.selected_items
-        #  if sel.length > 0
-        #    sel.each do |s|
-        #      view_file(s.path)
-        #    end
-        #  end
+        if evt.button == javafx.scene.input.MouseButton::SECONDARY
+          # right click on item
+          logs_ctxmenu.show(@tblLogs, evt.screen_x, evt.screen_y)
+        elsif evt.button == javafx.scene.input.MouseButton::PRIMARY and evt.click_count == 2
+         
+          sel = @tblLogs.selection_model.selected_item
 
-        #end
+          if not sel.nil?
+
+            st, res = @selWs.show_log(sel.key)
+
+            if st
+
+              javafx.application.Platform.run_later do
+                stage = javafx.stage.Stage.new
+                stage.title = "Log Detail"
+                stage.initModality(javafx.stage.Modality::WINDOW_MODAL)
+                #stage.initOwner(main_stage)
+                dlg = ShowTextController.load_into(stage)
+                dlg.set_title("Show Log Detail - #{}")
+                dlg.set_content(res)
+                stage.showAndWait
+
+              end # run_later
+
+            else
+              set_err_gmsg("Log detail for key '#{s.key}' failed. [#{res}]")
+            end
+
+          end
+
+        end
 
       end)
 
@@ -136,7 +146,7 @@ module GvcsFx
         entries = []
         res.each_line do |l|
           
-          puts l
+          #puts l
 
           ll = l.split("|")
 
@@ -162,6 +172,40 @@ module GvcsFx
       else
         @tblLogs.items.clear
       end
+    end # refresh_tab_logs
+
+    private
+    def logs_ctxmenu
+
+      @selLog = @tblLogs.selection_model.selected_items
+
+      @logsCtxMenu = javafx.scene.control.ContextMenu.new
+
+      if @selLog.length > 0
+
+        # 
+        # Copy subject menu item
+        #
+        ccmMnuItm = javafx.scene.control.MenuItem.new("Copy Commit Message")
+        ccmMnuItm.on_action do |evt|
+
+          s = @selLog.first
+          cc = javafx.scene.input.ClipboardContent.new
+          cc.putString(s.subject) 
+          javafx.scene.input.Clipboard.getSystemClipboard.setContent(cc)
+
+          set_info_gmsg("Commit message copied to system clipboard. Use Paste operation to paste it into destination.")
+
+        end
+        @logsCtxMenu.items.add(ccmMnuItm)
+        # 
+        # end diff menu item
+        #
+
+      end
+
+      @logsCtxMenu
+
     end
 
   end
