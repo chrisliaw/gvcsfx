@@ -74,17 +74,7 @@ module GvcsFx
               st, res = @selWs.diff_file(s.path)
               if st
 
-                javafx.application.Platform.run_later do
-                  stage = javafx.stage.Stage.new
-                  stage.title = "Diff Output"
-                  stage.initModality(javafx.stage.Modality::WINDOW_MODAL)
-                  #stage.initOwner(main_stage)
-                  dlg = ShowTextController.load_into(stage)
-                  dlg.set_title("Diff Result - #{s.path}")
-                  dlg.set_content(res)
-                  stage.showAndWait
-
-                end # run_later
+                show_content_win("Diff Output", "Diff Result - #{s.path}", res)
 
               else
                 set_err_gmsg("Diff for '#{s.path}' failed. [#{res}]")
@@ -113,7 +103,7 @@ module GvcsFx
     end
 
     # hooked to but Refresh on action
-    def refresh_vcs_status(evt)
+    def refresh_vcs_status(evt = nil)
       
       if not (@selWs.nil?)
 
@@ -163,8 +153,44 @@ module GvcsFx
 
     # hooked to on_key_typed
     def is_cmbCommit_enter(evt)
-      if evt.code == javafx.scene.input.KeyCode::ENTER
+      if (not evt.nil?) and evt.code == javafx.scene.input.KeyCode::ENTER
         vcs_commit(nil)
+      end
+    end
+
+    # hooked to the button "not ready to commit just yet..."
+    def stash_changes(evt)
+      mst, mods_dirs, mods_files = @selWs.modified_files
+      nst, news_dirs, news_files = @selWs.new_files
+      dst, dels_dirs, dels_files = @selWs.deleted_files
+
+      if mods_dirs.length > 0 or mods_files.length > 0 \
+          or news_dirs.length > 0 or news_files.length > 0 \
+          or dels_dirs.length > 0 or dels_files.length > 0
+
+        msg = []
+        msg << "System detected there are existing uncommitted changes in the current workspace:\n"
+        msg << "\tModified folder(s) : \t#{mods_dirs.length}\n"
+        msg << "\tModified file(s) : \t#{mods_files.length}\n"
+        msg << "\tDeleted folder(s) : \t#{dels_dirs.length}\n"
+        msg << "\tDeleted file(s) : \t#{dels_files.length}\n"
+        msg << "\tNew folder(s) : \t#{news_dirs.length}\n"
+        msg << "\tNew file(s) : \t\t#{news_files.length}\n"
+
+        st, name = fx_alert_input("Temporary Save Changes",msg.join, "Please give a descriptive name of this temporary changes.\nIt is recommended but not mandatory")
+        if st
+          # this means user click ok, but the text can still be empty
+          sst, res = @selWs.stash_changes(name)
+          if sst
+            set_info_gmsg(res)
+            refresh_vcs_status
+          else
+            prompt_error("Failed to stash the changes. Error was : #{res}")
+          end 
+        end
+
+      else
+        fx_alert_info("Workspace is clean. No uncommitted changes found")
       end
     end
 
@@ -336,7 +362,8 @@ module GvcsFx
                 if s.is_a?(NewFile)
                   igPat << s.path
                 elsif s.is_a?(DeletedFile)
-                  fx_alert_info("Folder '#{s.path}' is marked deleted but not yet committed.\nIf you wish to ignore this folder, please commit the changes first and select Add to ignore list again to ignore this folder.")
+                  fx_alert_info("Folder '#{s.path}' is marked deleted but not yet committed.\nFolder shall be put inside ignore rules but shall only reflect after you've committed the changes.")
+                  igPat << s.path
                 elsif s.is_a?(ModifiedFile)
                   res = fx_alert_confirmation("Folder being ignored is already tracked under the VCS.\nRemove folder from VCS and put it under ignore rule?", nil, "Confirmation to Ignore Tracked Folder", main_stage)
                   if res == :ok
@@ -345,14 +372,25 @@ module GvcsFx
                   end
                 end
 
-              end
+                cnt = igPat.join("\n")
+                st, res = @selWs.ignore(cnt)
+
+                if st
+                  set_success_gmsg(res)
+                  refresh_vcs_status(nil)
+                else
+                  set_err_gmsg("Add to ignore list for '#{igPat.join(",")}' failed. [#{res}]")
+                end
+
+              end # res == :0k
 
             else
               # is the file already in version control?
               if s.is_a?(NewFile)
                 igPat << s.path
               elsif s.is_a?(DeletedFile)
-                  fx_alert_info("File '#{s.path}' is marked deleted but not yet committed.\nIf you wish to ignore this file, please commit the changes first and select Add to ignore list again to ignore this file.")
+                  fx_alert_info("File '#{s.path}' is marked deleted but not yet committed.\nFile shall be put inside ignore rules but shall only reflect after you've committed the changes.")
+                  igPat << s.path
               elsif s.is_a?(ModifiedFile)
                 res = fx_alert_confirmation("File being ignored is already tracked under the VCS.\nRemove file from VCS and put it under ignore rule?", nil, "Confirmation to Ignore Tracked File", main_stage)
                 if res == :ok
@@ -361,17 +399,27 @@ module GvcsFx
                 end
               end
 
+              cnt = igPat.join("\n")
+              st, res = @selWs.ignore(cnt)
+
+              if st
+                set_success_gmsg(res)
+                refresh_vcs_status(nil)
+              else
+                set_err_gmsg("Add to ignore list for '#{igPat.join(",")}' failed. [#{res}]")
+              end
+
             end
           end
 
-          cnt = igPat.join("\n")
-          st, res = @selWs.ignore(cnt)
+          #cnt = igPat.join("\n")
+          #st, res = @selWs.ignore(cnt)
 
-          if st
-            refresh_vcs_status(nil)
-          else
-            set_err_gmsg("Add to ignore list for '#{igPat.join(",")}' failed. [#{res}]")
-          end
+          #if st
+          #  refresh_vcs_status(nil)
+          #else
+          #  set_err_gmsg("Add to ignore list for '#{igPat.join(",")}' failed. [#{res}]")
+          #end
 
         end
         @changesCtxMenu.items.add(ignMnuItm)
@@ -409,6 +457,40 @@ module GvcsFx
         #
         # end Add extension to ignore list
         #
+
+        @changesCtxMenu.items.add(javafx.scene.control.SeparatorMenuItem.new)
+
+        # 
+        # Revert changes
+        #
+        revertExtMnuItm = javafx.scene.control.MenuItem.new("Revert Changes")
+        revertExtMnuItm.on_action do |evt|
+
+          igPat = []
+          @selChanges.each do |s|
+            res = fx_alert_confirmation("Revert '#{s.path}' to version from last commit?\nAll changes made to the fill will be discarded!.", nil, "Confirmation to Revert Changes", main_stage)
+            if res == :ok
+              igPat << s.path
+            end
+
+          end
+
+          cnt = igPat.join("\n")
+          st, res = @selWs.reset_file_changes(cnt)
+
+          if st
+            set_info_gmsg(res)
+            refresh_vcs_status(nil)
+          else
+            set_err_gmsg("Add extension '#{igPat.join(",")}' to ignore list failed. [#{res}]")
+          end
+
+        end
+        @changesCtxMenu.items.add(revertExtMnuItm)
+        #
+        # end Add extension to ignore list
+        #
+
 
       end
 
