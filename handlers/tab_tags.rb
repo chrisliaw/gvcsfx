@@ -99,9 +99,21 @@ module GvcsFx
       if is_empty?(tn)
         fx_alert_error("Tag name cannot be empty","Empty Tag Name", main_stage)
       else
-        st, res = @selWs.create_tag(tn)
+
+        # annonated tag
+        tns = tn.split('@')
+        tag = nil
+        msg = nil 
+        if tns.length > 1
+          tag = tns.first.strip
+          msg = tns[1].strip
+        else
+          tag = tns.first.strip
+        end
+
+        st, res = @selWs.create_tag(tag,msg)
         if st
-          fx_alert_info("New tag '#{tn}' successfully created.","New Tag Created",main_stage)
+          fx_alert_info("New tag '#{tag}' successfully created.","New Tag Created",main_stage)
           refresh_tab_tags
         else
           fx_alert_error(res.strip, "New Tag Creation Failed", main_stage)
