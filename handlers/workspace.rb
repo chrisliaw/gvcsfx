@@ -51,8 +51,6 @@ module GvcsFx
           
           refresh_details
 
-          #raise_event(:workspace_selected)
-
           show_details
         else
           show_landing
@@ -67,23 +65,28 @@ module GvcsFx
 
       path = @txtWorkspacePath.text
       if not_empty?(path)
-        fx_alert_error("Given path '#{path}' does not exist. Please make sure it is a valid path.","Given Path Invalid",main_stage) if not File.exist?(path)  
 
-        vcs = Gvcs::Vcs.new
-        tws = Gvcs::Workspace.new(vcs, path)
-        if not tws.is_workspace?
-          vcs.init(path)
+        if not File.exist?(path)
+          prompt_error("Given path '#{path}' does not exist. Please make sure it is a valid path.","Given Path Invalid",main_stage)
+        else
+
+          vcs = Gvcs::Vcs.new
+          tws = Gvcs::Workspace.new(vcs, path)
+          if not tws.is_workspace?
+            vcs.init(path)
+          end
+
+          ds = Global.instance.storage
+          ds.add_workspace("",path)
+          ds.store
+
+          refresh_workspace_list
+          @txtWorkspacePath.clear
+
         end
 
-        ds = Global.instance.storage
-        ds.add_workspace("",path)
-        ds.store
-
-        refresh_workspace_list
-        @txtWorkspacePath.clear
-
       else
-        fx_alert_error "Please provide a folder path before Add operation", "Empty Path", main_stage
+        prompt_error "Please provide a folder path before Add operation", "Empty Path", main_stage
       end
       
     end
@@ -125,12 +128,12 @@ module GvcsFx
     
     def show_details
       @pnlLanding.visible = false
-      @pnlDetails.visible = true
+      @tabPnlDetails.visible = true
     end
 
     def show_landing
       @pnlLanding.visible = true
-      @pnlDetails.visible = false
+      @tabPnlDetails.visible = false
     end
 
     def workspace_key_released(evt)
@@ -145,8 +148,9 @@ module GvcsFx
             refresh_workspace_list
             refresh_details
             log_debug "Workspace '#{s}' removed from management"
+            set_info_gmsg("Workspace '#{s}' removed from management")
           else
-            puts "Abort!"
+            set_err_gmsg("Workspace delete operation aborted")
           end
         end
 
