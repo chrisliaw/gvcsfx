@@ -86,6 +86,8 @@ module GvcsFx
         end
       end) # end mouse event
 
+      @msgHistory = []
+      @cmbCommitMsg.items.clear
     end
 
     # hooked to but Commit on action
@@ -98,6 +100,10 @@ module GvcsFx
         fx_alert_error "Commit message must be present.", "Empty Commit Message", main_stage
       else
         commit_changes(sel, msg)
+        if not @msgHistory.include?(msg)
+          @cmbCommitMsg.items.add(msg)
+          @msgHistory << msg
+        end
         refresh_tab_state
       end
     end
