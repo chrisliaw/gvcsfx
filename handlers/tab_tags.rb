@@ -21,7 +21,9 @@ module GvcsFx
     end
 
     def init_tab_tags
-
+ 
+      @lstTags.selection_model.selection_mode = javafx.scene.control.SelectionMode::SINGLE
+ 
       @lstTags.add_event_handler(javafx.scene.input.MouseEvent::MOUSE_CLICKED, Proc.new do |evt|
         #if evt.button == javafx.scene.input.MouseButton::SECONDARY
         #  # right click on item
@@ -113,10 +115,10 @@ module GvcsFx
 
         st, res = @selWs.create_tag(tag,msg)
         if st
-          fx_alert_info("New tag '#{tag}' successfully created.","New Tag Created",main_stage)
+          set_success_gmsg("New tag '#{tag}' successfully created.")
           refresh_tab_tags
         else
-          fx_alert_error(res.strip, "New Tag Creation Failed", main_stage)
+          prompt_error(res.strip, "New Tag Creation Failed", main_stage)
         end
       end
     end # create_tag
@@ -125,6 +127,42 @@ module GvcsFx
       if evt.code == javafx.scene.input.KeyCode::ENTER
         create_tag(nil)
       end
+    end
+
+    def tags_ctxmnu
+
+      @selTag = @lstTags.selection_model.selected_item
+
+      @tagsCtxMenu = javafx.scene.control.ContextMenu.new
+
+      if not @selTags.nil?
+
+
+      end
+
+
+    end
+
+    def lstTags_keypressed(evt)
+      if evt.code == javafx.scene.input.KeyCode::DELETE
+        @selTag = @lstTags.selection_model.selected_item
+        if not @selTag.nil?
+          res = fx_alert_confirmation("Remove tag '#{@selTag.name}'?", nil, "Confirmation to Remove Tag", main_stage)
+          if res == :ok
+            st, res = @selWs.delete_tag(@selTag.name)
+
+            if st
+              set_success_gmsg("Tag '#{@selTag.name}' successfully deleted.")
+              refresh_tab_tags
+            else
+              prompt_error("Failed to delete tag '#{@selTag.name}'. Error was : #{res}")
+            end
+
+          end          
+        end
+      end      
+      #@selTag = @lstTags.selection_model.selected_item
+
     end
 
   end
