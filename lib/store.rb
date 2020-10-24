@@ -75,7 +75,7 @@ module GvcsFx
         @workspaces.each do |w|
           if w.path == path
             @workspaces.delete(w)
-            @paths.delete(w)
+            @paths.delete(path)
             break
           end
         end
