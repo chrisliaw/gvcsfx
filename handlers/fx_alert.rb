@@ -84,6 +84,20 @@ module GvcsFx
         end
       #end
       
+    end # fx_alert_confirmation
+
+    def fx_alert_input(title, header, content)
+      dlg = javafx.scene.control.TextInputDialog.new
+      dlg.title = title
+      dlg.header_text = header
+      dlg.content_text = content
+      res = dlg.show_and_wait
+      if res.is_present
+        # there is some string in the text field
+        [true, res.get]
+      else
+        [false, ""]
+      end
     end
 
   end
