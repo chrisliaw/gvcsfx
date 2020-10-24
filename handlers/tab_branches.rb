@@ -23,7 +23,7 @@ module GvcsFx
 
         end
       end)
-      
+
     end
 
     def refresh_tab_branches
@@ -46,7 +46,7 @@ module GvcsFx
       else
         st, res = @selWs.create_branch(bn)
         if st
-          fx_alert_info("New branch '#{bn}' successfully created.","New Branch Created",main_stage)
+          set_success_gmsg("New branch '#{bn}' successfully created.")
           refresh_tab_branches
         else
           fx_alert_error(res.strip,"New Branch Creation Failed", main_stage)
@@ -58,10 +58,25 @@ module GvcsFx
       if evt.button == javafx.scene.input.MouseButton::PRIMARY and evt.click_count == 2
         selBr = @lstBranches.selection_model.selected_item  
         if not_empty?(selBr)
-          # switch branch
-          st, res = @selWs.switch_branch(selBr)
-          refresh_tab_branches
+          if is_current_branch(selBr)
+          else
+            # switch branch
+            st, res = @selWs.switch_branch(selBr)
+            if st
+              set_info_gmsg("Workspace's branch switched to '#{selBr}'")
+              refresh_tab_branches
+            else
+              prompt_error("Failed to switch to branch '#{selBr}'. Error was :\n\n#{res}")
+            end
+          end
         end
+      end
+    end
+
+    # hooked on text field of new branch
+    def new_branch_keypressed(evt)
+      if evt.code == javafx.scene.input.KeyCode::ENTER
+        create_branch(nil)
       end
     end
 
