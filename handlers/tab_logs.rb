@@ -111,19 +111,7 @@ module GvcsFx
             st, res = @selWs.show_log(sel.key)
 
             if st
-
-              javafx.application.Platform.run_later do
-                stage = javafx.stage.Stage.new
-                stage.title = "Log Detail"
-                stage.initModality(javafx.stage.Modality::WINDOW_MODAL)
-                #stage.initOwner(main_stage)
-                dlg = ShowTextController.load_into(stage)
-                dlg.set_title("Show Log Detail - #{}")
-                dlg.set_content(res)
-                stage.showAndWait
-
-              end # run_later
-
+              show_content_win("Log Detail", "Show Log Detail - #{sel.key}", res)
             else
               set_err_gmsg("Log detail for key '#{s.key}' failed. [#{res}]")
             end
