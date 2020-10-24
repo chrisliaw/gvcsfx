@@ -12,7 +12,12 @@ module GvcsFx
     end
 
     def on_save_ignore_rules(evt)
-      @selWs.update_ignore_rules(@txtIgnoreRules.text)   
+      st,res = @selWs.update_ignore_rules(@txtIgnoreRules.text)   
+      if st
+        set_success_gmsg(res)
+      else
+        prompt_error(res,"Save Ignore Rules Error")
+      end
     end
 
   end
