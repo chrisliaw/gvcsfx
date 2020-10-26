@@ -26,9 +26,9 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="788.0" prefWidth="1068.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1">
+<VBox fx:id="mainNode" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="788.0" prefWidth="1068.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <SplitPane dividerPositions="0.3" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" VBox.vgrow="ALWAYS">
+      <SplitPane dividerPositions="0.48" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" VBox.vgrow="ALWAYS">
         <items>
           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
                <children>
@@ -43,16 +43,6 @@
                         <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
                     </rowConstraints>
                      <children>
-                        <TitledPane collapsible="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Managed Workspace(s)" GridPane.columnSpan="3" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
-                           <content>
-                              <TableView fx:id="tblWorkspaces" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" onDragDropped="#workspace_dnd_dropped" onDragOver="#workspace_dnd_over" onKeyReleased="#workspace_key_released">
-                                <columns>
-                                  <TableColumn prefWidth="75.0" text="C1" />
-                                  <TableColumn prefWidth="75.0" text="C2" />
-                                </columns>
-                              </TableView>
-                           </content>
-                        </TitledPane>
                         <TextField fx:id="txtWorkspacePath" promptText="Workspace path" GridPane.columnSpan="2">
                            <GridPane.margin>
                               <Insets right="5.0" />
@@ -68,6 +58,25 @@
                               </Button>
                            </children>
                         </HBox>
+                        <TitledPane animated="false" collapsible="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Managed Workspace" GridPane.columnSpan="3" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
+                           <content>
+                              <VBox prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+                                 <children>
+                                    <HBox alignment="CENTER_RIGHT" maxWidth="1.7976931348623157E308" prefHeight="100.0" VBox.vgrow="ALWAYS">
+                                       <children>
+                                          <ComboBox fx:id="cmbWorkspaceProjectFilter" prefWidth="198.0" promptText="Filter by Project" />
+                                       </children>
+                                    </HBox>
+                                    <TreeTableView fx:id="trtblWorkspace" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" onDragDropped="#trtblWorkspace_dnd_dropped" onDragOver="#trtblWorkspace_dnd_over" onKeyReleased="#trtbleWorkspace_keyreleased" onMouseClicked="#trtblWorkspace_onMouseClicked">
+                                       <columns>
+                                          <TreeTableColumn prefWidth="75.0" text="C1" />
+                                          <TreeTableColumn prefWidth="75.0" text="C2" />
+                                       </columns>
+                                    </TreeTableView>
+                                 </children>
+                              </VBox>
+                           </content>
+                        </TitledPane>
                      </children>
                   </GridPane>
                </children>

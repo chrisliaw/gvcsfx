@@ -21,6 +21,8 @@ require_relative "event_handler"
 
 require_relative '../lib/log_helper'
 
+require_relative 'add_workspace_controller'
+
 module GvcsFx
   class MainWinController
     include JRubyFX::Controller
@@ -155,7 +157,6 @@ module GvcsFx
         dlg.set_title(dlgTitle)
         dlg.set_content(content)
         stage.showAndWait
-
       end # run_later
 
     end
