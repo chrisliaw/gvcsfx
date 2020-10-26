@@ -1,4 +1,6 @@
 
+java_import javafx.scene.control.TableColumn
+
 require_relative 'show_text_controller'
 
 module GvcsFx
