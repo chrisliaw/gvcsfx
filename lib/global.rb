@@ -16,8 +16,8 @@ module GvcsFx
       @logger = Tlogger.new
     end
 
-    def storage
-      if @store.nil?
+    def storage(reload = true)
+      if @store.nil? or reload
         @store = GvcsFx::DataStore::DefaultDataStore.load
       end
 
