@@ -152,14 +152,15 @@ module GvcsFx
       if evt.code == javafx.scene.input.KeyCode::DELETE
         sel = @tblRepos.selection_model.selected_items.to_a
         if sel.length > 0
-          nm = sel.first.name
-          pa = sel.first.url
+          nm = sel.first.repos.name
+          pa = sel.first.repos.url
           res = fx_alert_confirmation("Delete Repository '#{nm} - #{pa}' from system?", nil, "Remove Repository?", main_stage)
           if res == :ok
             st, rres = @selWs.remove_remote(nm)
             if st
               refresh_repos_list
               log_debug "Remote repository '#{nm} - #{pa}' removed from workspace"
+              set_success_gmsg("Remote repository '#{nm} - #{pa}' removed from workspace")
             else
               fx_alert_error(rres,"Remove Repository Exception",main_stage)
             end
