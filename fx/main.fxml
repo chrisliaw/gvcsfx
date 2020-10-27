@@ -313,6 +313,11 @@
                                                             <Insets right="5.0" />
                                                          </HBox.margin>
                                                       </TextField>
+                                                      <Button fx:id="butRepositoryOpen" maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#butRepositoryOpen_onAction" prefWidth="80.0" text="Open">
+                                                         <HBox.margin>
+                                                            <Insets right="5.0" />
+                                                         </HBox.margin>
+                                                      </Button>
                                                       <Button fx:id="butReposAdd" maxWidth="80.0" minWidth="80.0" mnemonicParsing="false" onAction="#add_repository" prefWidth="80.0" text="Add" />
                                                    </children>
                                                 </HBox>
@@ -577,7 +582,7 @@
       <GridPane VBox.vgrow="NEVER">
          <columnConstraints>
             <ColumnConstraints hgrow="SOMETIMES" maxWidth="550.0" minWidth="10.0" prefWidth="532.0" />
-            <ColumnConstraints hgrow="SOMETIMES" maxWidth="764.0" minWidth="10.0" prefWidth="530.0" />
+            <ColumnConstraints hgrow="ALWAYS" maxWidth="1.7976931348623157E308" />
          </columnConstraints>
          <rowConstraints>
             <RowConstraints maxHeight="38.0" minHeight="38.0" prefHeight="38.0" vgrow="SOMETIMES" />
