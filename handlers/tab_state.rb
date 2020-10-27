@@ -233,10 +233,12 @@ module GvcsFx
 
       begin
         cst, res = @selWs.commit(msg)
-        if !cst
+        if cst
+          @cmbCommitMsg.items.add(msg)
+        else
           reset_add_commit_error(@processed,@emptyDirCommit)
-          #fx_alert_error("Error while committing changes. Error was:\n#{res.strip}", "Commit Error", GvcsFxException)
-          set_err_gmsg("Error while committing changes. Error was:\n#{res.strip}")
+          prompt_error("Error while committing changes. Error was:\n#{res.strip}", "Commit Error", GvcsFxException)
+          #set_err_gmsg("Error while committing changes. Error was:\n#{res.strip}")
         end
       rescue Exception => ex;
         reset_add_commit_error(@processed,@emptyDirCommit)
