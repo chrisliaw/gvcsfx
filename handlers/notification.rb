@@ -1,11 +1,11 @@
 
-
 module GvcsFx
   module Notification
 
     def prompt_error(str, title = "GVCS Error", stage = main_stage)
       set_err_gmsg(str)
       fx_alert_error(str, title, stage)
+      log_error(str)
     end
     def prompt_info(str, title = "GVCS Info", stage = main_stage)
       set_info_gmsg(str)
@@ -14,6 +14,7 @@ module GvcsFx
     def prompt_warn(str, title = "GVCS Warning", stage = main_stage)
       set_warn_gmsg(str)
       fx_alert_warn(str, title, stage)
+      log_warn(str)
     end
 
     def reset_gmsg
