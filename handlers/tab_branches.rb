@@ -3,6 +3,43 @@
 module GvcsFx
   module TabBranches
 
+    class VcsStash < Hash
+
+      def to_s
+      end
+    end
+
+    class VcsBranch
+      include Antrapol::ToolRack::ExceptionUtils
+
+      attr_accessor :name, :stash, :current
+      def initialize
+        @name = ""
+        @stash = VcsStash.new
+        @current = false
+      end
+
+      def name=(val)
+        if not_empty?(val)
+          if val =~ /\*/
+            @current = true
+            @name = val.gsub("*","").strip
+          else
+            @name = val
+          end
+        end
+      end
+
+      def to_s
+        res = []
+        res << "#{(@current ? "* #{@name}" : @name)}"
+        if not_empty?(@stash)
+          res << "(#{@stash.length} stash(es) on this branch found)"
+        end
+        res.join(" ")
+      end
+    end # VcsBranch
+
     def init_tab_branches
 
       @lstBranches.add_event_handler(javafx.scene.input.MouseEvent::MOUSE_CLICKED, Proc.new do |evt|
@@ -30,9 +67,29 @@ module GvcsFx
      
       @lstBranches.items.clear
 
-      st, br = @selWs.all_branches
+      st, br = @selWs.local_branches
       if st
-        @lstBranches.items.add_all(br)
+        sst, sinfo = @selWs.stash_list
+        if sst
+
+          bbr = { }
+          br.each do |b|
+            vb = VcsBranch.new
+            vb.name = b
+            bbr[vb.name] = vb
+          end
+
+          sinfo.each do |k,v|
+            if bbr.keys.include?(v[0])
+              bbr[v[0]].stash[k] = v
+            end
+          end
+
+          @lstBranches.items.add_all(bbr.values)
+
+        else
+          @lstBranches.items.add_all(br)
+        end
       end
       
       @txtNewBranchName.clear
@@ -58,15 +115,15 @@ module GvcsFx
       if evt.button == javafx.scene.input.MouseButton::PRIMARY and evt.click_count == 2
         selBr = @lstBranches.selection_model.selected_item  
         if not_empty?(selBr)
-          if is_current_branch(selBr)
+          if selBr.current #is_current_branch(selBr)
           else
             # switch branch
-            st, res = @selWs.switch_branch(selBr)
+            st, res = @selWs.switch_branch(selBr.name)
             if st
-              set_info_gmsg("Workspace's branch switched to '#{selBr}'")
+              set_info_gmsg("Workspace's branch switched to '#{selBr.name}'")
               refresh_tab_branches
             else
-              prompt_error("Failed to switch to branch '#{selBr}'. Error was :\n\n#{res}")
+              prompt_error("Failed to switch to branch '#{selBr.name}'. Error was :\n\n#{res}")
             end
           end
         end
@@ -80,6 +137,23 @@ module GvcsFx
       end
     end
 
+    def show_stash_restore_win(options, stageTitle = "GVCS - Stash Restore")
+
+      #javafx.application.Platform.run_later do
+
+        stage = javafx.stage.Stage.new
+        stage.title = stageTitle
+        stage.initModality(javafx.stage.Modality::WINDOW_MODAL)
+        stage.initOwner(main_stage)
+        dlg = StashSelectController.load_into(stage)
+        dlg.options = options
+        stage.showAndWait
+
+        dlg.result
+      #end # run_later
+
+    end # show_options_win
+
 
     def branches_ctxmenu
       
@@ -89,61 +163,120 @@ module GvcsFx
 
       if @selBranch.length > 0
 
-        st, currBranch = @selWs.current_branch
-
-        if st
-
-          selBr = @selBranch.first
-          if not is_current_branch(selBr)
-
-            mergeMnuItm = javafx.scene.control.MenuItem.new("Merge with #{currBranch}")
-            mergeMnuItm.on_action do |evt|
-              
-              res = fx_alert_confirmation("Merge changes in branch '#{selBr}' into '#{currBranch}'?", nil, "Confirmation to Merge Branches", main_stage)
-              if res == :ok
-                st,res = @selWs.merge_branch(selBr)
-                if st
-                  set_info_gmsg("Branch '#{selBr}' merged into '#{currBranch}' successfully.")
-                else
-                  log_error("Merge branch '#{selBr}' inito '#{currBranch}' failed. [#{res}]")
-                  set_err_gmsg("Merge branch '#{selBr}' inito '#{currBranch}' failed. [#{res}]")
-                end
-              end # if user answer ok to merge
+        selBr = @selBranch.first
+        bst, currBranch = @selWs.current_branch
 
 
-            end  # on_action do .. end
-
-            @branchesCtxMenu.items.add(mergeMnuItm)
+        if not selBr.current #is_current_branch(selBr)
 
 
-            @branchesCtxMenu.items.add(javafx.scene.control.SeparatorMenuItem.new)
+          mergeMnuItm = javafx.scene.control.MenuItem.new("Merge with #{currBranch}")
+          mergeMnuItm.on_action do |evt|
 
-            delMnuItm = javafx.scene.control.MenuItem.new("Delete branch")
-            delMnuItm.on_action do |evt|
-              
-              res = fx_alert_confirmation("Delete branch '#{selBr}'?", nil, "Confirmation to Delete Branch", main_stage)
-              if res == :ok
-                st,res = @selWs.delete_branch(selBr)
-                if st
-                  set_info_gmsg("Branch '#{selBr}' deleted successfully.")
-                  refresh_tab_branches
-                else
-                  log_error("Delete branch '#{selBr}' failed. [#{res}]")
-                  set_err_gmsg("Delete branch '#{selBr}' failed. [#{res}]")
-                end
-              end # if user answer ok to delete
+            res = fx_alert_confirmation("Merge changes in branch '#{selBr.name}' into '#{currBranch}'?", nil, "Confirmation to Merge Branches", main_stage)
+            if res == :ok
+              st,res = @selWs.merge_branch(selBr.name)
+              if st
+                set_success_gmsg("Branch '#{selBr.name}' merged into '#{currBranch}' successfully.")
+              else
+                log_error("Merge branch '#{selBr.name}' inito '#{currBranch}' failed. [#{res}]")
+                prompt_error("Merge branch '#{selBr.name}' inito '#{currBranch}' failed. [#{res}]")
+              end
+            end # if user answer ok to merge
 
 
-            end  # on_action do .. end
+          end  # on_action do .. end
 
-            @branchesCtxMenu.items.add(delMnuItm)
+          @branchesCtxMenu.items.add(mergeMnuItm)
 
 
-          end # if selected branch is not current branch
+          @branchesCtxMenu.items.add(javafx.scene.control.SeparatorMenuItem.new)
+
+          delMnuItm = javafx.scene.control.MenuItem.new("Delete branch")
+          delMnuItm.on_action do |evt|
+
+            res = fx_alert_confirmation("Delete branch '#{selBr.name}'?", nil, "Confirmation to Delete Branch", main_stage)
+            if res == :ok
+              st,res = @selWs.delete_branch(selBr.name)
+              if st
+                set_success_gmsg("Branch '#{selBr.name}' deleted successfully.")
+                refresh_tab_branches
+              else
+                log_error("Delete branch '#{selBr.name}' failed. [#{res}]")
+                prompt_error("Delete branch '#{selBr.name}' failed. [#{res}]")
+              end
+            end # if user answer ok to delete
+
+
+          end  # on_action do .. end
+
+          @branchesCtxMenu.items.add(delMnuItm)
 
         else
-          set_err_gmsg("Failed to get current branch for context menu construction. [#{currBranch}]")
+          #@branchesCtxMenu.items.add(javafx.scene.control.SeparatorMenuItem.new) if @branchesCtxMenu.items.count > 0
+
+          #if not_empty?(selBr.stash)
+
+          #  lsMnuItm = javafx.scene.control.MenuItem.new("Restore Stash to new branch")
+          #  lsMnuItm.on_action do |evt|
+
+          #    st, sel, branch = show_stash_restore_win(selBr.stash)
+          #    if st
+          #      if is_empty?(sel)
+          #        prompt_error("Please select one of the Stash to restore.","Empty Stash Selection")
+          #      elsif is_empty?(branch)
+          #        prompt_error("Please provide a branch name.","Empty Branch Name")
+          #      else
+          #        sst, sres = @selWs.stash_to_new_branch(branch, sel.key)
+
+          #        if sst
+          #          set_success_gmsg(sres)
+          #        else
+          #          prompt_error("Failed to store the stash to #{currBranch}. Error was : #{sres}")
+          #        end
+          #      end
+          #    end
+
+          #  end  # on_action do .. end
+
+          #  @branchesCtxMenu.items.add(lsMnuItm)
+
+          #end
+ 
+        end # if selected branch is not current branch
+
+
+        if not_empty?(selBr.stash)
+
+          @branchesCtxMenu.items.add(javafx.scene.control.SeparatorMenuItem.new) if @branchesCtxMenu.items.count > 0
+
+          lsMnuItm = javafx.scene.control.MenuItem.new("Restore Stash to new branch")
+          lsMnuItm.on_action do |evt|
+            
+              st, sel, branch = show_stash_restore_win(selBr.stash)
+              if st
+                if is_empty?(sel)
+                  prompt_error("Please select one of the Stash to restore.","Empty Stash Selection")
+                elsif is_empty?(branch)
+                  prompt_error("Please provide a branch name.","Empty Branch Name")
+                else
+                  sst, sres = @selWs.stash_to_new_branch(branch, sel.key)
+
+                  if sst
+                    set_success_gmsg(sres)
+                    refresh_tab_branches
+                  else
+                    prompt_error("Failed to restore the stash '#{sel.key}' to new branch #{branch}. Error was : #{sres}")
+                  end
+                end
+              end
+
+          end  # on_action do .. end
+
+          @branchesCtxMenu.items.add(lsMnuItm)
+        
         end
+
 
       end
 

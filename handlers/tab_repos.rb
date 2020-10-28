@@ -152,14 +152,15 @@ module GvcsFx
       if evt.code == javafx.scene.input.KeyCode::DELETE
         sel = @tblRepos.selection_model.selected_items.to_a
         if sel.length > 0
-          nm = sel.first.name
-          pa = sel.first.url
+          nm = sel.first.repos.name
+          pa = sel.first.repos.url
           res = fx_alert_confirmation("Delete Repository '#{nm} - #{pa}' from system?", nil, "Remove Repository?", main_stage)
           if res == :ok
             st, rres = @selWs.remove_remote(nm)
             if st
               refresh_repos_list
               log_debug "Remote repository '#{nm} - #{pa}' removed from workspace"
+              set_success_gmsg("Remote repository '#{nm} - #{pa}' removed from workspace")
             else
               fx_alert_error(rres,"Remove Repository Exception",main_stage)
             end
@@ -203,7 +204,31 @@ module GvcsFx
       
     end
 
+    def butRepositoryOpen_onAction(evt)
+      dc = javafx.stage.DirectoryChooser.new 
+      dc.title = "Select Local Repository"
+      wsDir = dc.showDialog(main_stage)
+
+      @txtReposUrl.text = wsDir.absolute_path
+    end
+
     def repos_pull(evt)
+      sel = @tblRepos.selection_model.selected_items.to_a
+      if sel.length > 0
+        selRepos = sel.first
+        
+        repos = selRepos.repos.name
+        @selWs.add_repos(selRepos.repos)
+        ret, msg = @selWs.pull(repos, @currBr)
+        if ret
+          set_success_gmsg(msg)
+        else
+          fx_alert_error(msg, "GVCS Repository Pull Exception", main_stage)
+        end
+
+      else
+        fx_alert_error("No repository selected. Please select one repository to pull.", "No Repository Selected", main_stage)
+      end
     end
 
     def repos_push(evt)
@@ -222,7 +247,7 @@ module GvcsFx
         end
 
         if ret
-          set_gmsg("Push result : #{msg.strip}")
+          set_success_gmsg(msg)
         else
           fx_alert_error(msg, "GVCS Repository Push Exception", main_stage)
         end

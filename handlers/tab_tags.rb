@@ -8,11 +8,16 @@ module GvcsFx
       attr_accessor :key, :name, :date, :author, :subject
       def formatted_date
         if not_empty?(@date)
-          dt = DateTime.strptime(@date,"%a %b %d %H:%M:%S %Y %z")
+          dt = rdate
           dt.strftime("%d.%b.%Y (%a) %H:%M %z")
         else
           ""
         end
+      end
+
+      # for sorting
+      def rdate
+        DateTime.strptime(@date,"%a %b %d %H:%M:%S %Y %z")
       end
 
       def to_s
@@ -53,7 +58,7 @@ module GvcsFx
       dat = []
       st, res = @selWs.all_tags
       if st and not_empty?(res)
-        
+       
         res.each_line do |e|
 
           st2,res2 = @selWs.tag_info(e.strip)
@@ -87,12 +92,25 @@ module GvcsFx
             end
           end
 
+        end # tag info line
+
+        # sort 
+        dat = dat.sort do |a,b|
+          case 
+          when a.rdate < b.rdate
+            1
+          when a.rdate > b.rdate
+            -1
+          else
+            a.rdate <=> b.rdate
+          end
         end
 
         @lstTags.items.add_all(dat)
       end
 
       @txtNewTagName.clear
+      @txtNewTagNote.clear
        
     end # refresh_tab_tags
 
@@ -101,21 +119,11 @@ module GvcsFx
       if is_empty?(tn)
         fx_alert_error("Tag name cannot be empty","Empty Tag Name", main_stage)
       else
-
-        # annonated tag
-        tns = tn.split('@')
-        tag = nil
-        msg = nil 
-        if tns.length > 1
-          tag = tns.first.strip
-          msg = tns[1].strip
-        else
-          tag = tns.first.strip
-        end
-
-        st, res = @selWs.create_tag(tag,msg)
+        msg = @txtNewTagNote.text
+        tn = tn.gsub(" ","-")
+        st, res = @selWs.create_tag(tn,msg)
         if st
-          set_success_gmsg("New tag '#{tag}' successfully created.")
+          set_success_gmsg("New tag '#{tn}' successfully created.")
           refresh_tab_tags
         else
           prompt_error(res.strip, "New Tag Creation Failed", main_stage)
@@ -127,20 +135,6 @@ module GvcsFx
       if evt.code == javafx.scene.input.KeyCode::ENTER
         create_tag(nil)
       end
-    end
-
-    def tags_ctxmnu
-
-      @selTag = @lstTags.selection_model.selected_item
-
-      @tagsCtxMenu = javafx.scene.control.ContextMenu.new
-
-      if not @selTags.nil?
-
-
-      end
-
-
     end
 
     def lstTags_keypressed(evt)
@@ -163,6 +157,10 @@ module GvcsFx
       end      
       #@selTag = @lstTags.selection_model.selected_item
 
+    def tagnote_keypressed(evt)
+      if evt.code == javafx.scene.input.KeyCode::ENTER
+        create_tag(nil)
+      end
     end
 
   end

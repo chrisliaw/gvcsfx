@@ -21,6 +21,9 @@ require_relative "event_handler"
 
 require_relative '../lib/log_helper'
 
+require_relative 'add_workspace_controller'
+require_relative 'stash_select_controller'
+
 module GvcsFx
   class MainWinController
     include JRubyFX::Controller
@@ -144,18 +147,17 @@ module GvcsFx
       File.dirname(__FILE__)[0..3] == "uri:"
     end
 
-    def show_content_win(stageTitle, dlgTitle, content)
+    def show_content_win(stageTitle, dlgTitle, content, parent = nil)
 
       javafx.application.Platform.run_later do
         stage = javafx.stage.Stage.new
         stage.title = stageTitle
         stage.initModality(javafx.stage.Modality::WINDOW_MODAL)
-        #stage.initOwner(main_stage)
+        stage.initOwner(parent) if not parent.nil?
         dlg = ShowTextController.load_into(stage)
         dlg.set_title(dlgTitle)
         dlg.set_content(content)
         stage.showAndWait
-
       end # run_later
 
     end

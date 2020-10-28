@@ -13,7 +13,8 @@ module GvcsFx
       register(Listener::Event[:workspace_added], Proc.new do |opts|
 
         # change display from landing to details
-        show_details
+        # NO workspace selected yet so hold
+        #show_details
         refresh_workspace_list
 
       end)
@@ -22,7 +23,7 @@ module GvcsFx
 
     def handle_workspace_selection_changed
       register(Listener::Event[:workspace_selection_changed], Proc.new do |opts|
-
+        
         refresh_details
 
         #case @shownTab

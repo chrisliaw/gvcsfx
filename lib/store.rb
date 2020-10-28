@@ -9,22 +9,27 @@ module GvcsFx
   module DataStore
 
     class Workspace
-      attr_accessor :name, :path, :last_access
-      def initialize(name, path)
-        @name = name
+      attr_accessor :path, :last_access, :parent
+      def initialize(path, parent)
         @path = path
+        @parent = parent
       end
     end
 
     class DefaultDataStore
-     
-      FILENAME = "workspaces.yml"
+    
+      include Antrapol::ToolRack::ExceptionUtils
+
+      FILENAME = "workspaces_tr.yml"
       DEFPATH = File.join(GvcsFx::GVCSFX_STORE_ROOT, FILENAME)
 
       attr_reader :workspaces
+      attr_reader :parent, :paths, :wsList
       def initialize
-        @workspaces = []
+        @workspaces = { }
+        @wsRef = { }
         @paths = []
+        @parent = []
       end
 
       def store(path = DEFPATH)
@@ -32,6 +37,8 @@ module GvcsFx
           if not File.exist?(File.dirname(path))
             FileUtils.mkdir_p File.dirname(path)
           end
+
+          @parent = @workspaces.keys.sort
 
           File.open(path,"w") do |f|
             f.write YAML.dump(self)
@@ -46,7 +53,7 @@ module GvcsFx
               @cont = f.read
             end
 
-            YAML.load(@cont)
+            obj = YAML.load(@cont)
           rescue Exception => ex
             Global.instance.logger.error ex.message
             Global.instance.logger.error "Failed to load store from '#{path}'. Returning new instance."
@@ -57,29 +64,60 @@ module GvcsFx
         end
       end
 
-      def add_workspace(name, path)
-        #raise GvcsFxException, "Name cannot be empty" if name.nil? or name.empty?
-        raise GvcsFxException, "Path cannot be empty" if path.nil? or path.empty?
-
-        name = path if name.nil? or name.empty?
-
-        if not @paths.include?(path) 
-          @workspaces << Workspace.new(name, path)
-          @paths << path
+      def new_project(proj)
+        if not_empty?(proj)
+          @workspaces[proj] = []
         end
       end
+
+      def delete_project(proj)
+        if not_empty?(proj) and @workspaces.keys.include?(proj)
+          @workspaces.delete(proj)
+          @parent.delete(proj)
+        end
+      end
+
+      def is_project_registered?(proj)
+        if not_empty?(proj)
+          @workspaces.keys.include?(proj)
+        end
+      end
+
+      def add_workspace(parent, path)
+        raise GvcsFxException, "Parent cannot be empty" if parent.nil? or parent.empty?
+        raise GvcsFxException, "Path cannot be empty" if path.nil? or path.empty?
+
+
+        if not @paths.include?(path) 
+          if not @workspaces.keys.include?(parent)
+            @workspaces[parent] = []
+          end
+
+          ws = Workspace.new(path, parent)
+          @workspaces[parent] << ws 
+          # todo sort the array of parent... but the array contains object
+          # custom sorter is required
+          @paths << path
+          @wsRef[path] = ws
+        end
+      end # add_workspace
 
       def remove_workspace(path)
         raise GvcsFxException, "Path cannot be empty" if path.nil? or path.empty?
 
-        @workspaces.each do |w|
-          if w.path == path
-            @workspaces.delete(w)
-            @paths.delete(path)
-            break
-          end
-        end
+        ws = @wsRef[path]
+        @workspaces[ws.parent].delete(ws)
+        @paths.delete(path)
+        @wsRef.delete(path)
 
+      end # remove_workspace
+
+      def is_workspace_registered?(path)
+        @paths.include?(path.strip)
+      end # is workspace_registered?
+
+      def is_project_empty?(proj)
+        @workspaces[proj].length == 0
       end
 
     end # DefaultDataStore
