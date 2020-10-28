@@ -242,8 +242,9 @@
                                             <rowConstraints>
                                               <RowConstraints maxHeight="178.0" minHeight="-Infinity" prefHeight="28.0" vgrow="NEVER" />
                                               <RowConstraints maxHeight="1.7976931348623157E308" vgrow="ALWAYS" />
-                                              <RowConstraints minHeight="-Infinity" vgrow="SOMETIMES" />
-                                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                              <RowConstraints maxHeight="-Infinity" minHeight="-Infinity" prefHeight="38.0" vgrow="SOMETIMES" />
+                                                <RowConstraints maxHeight="-Infinity" minHeight="-Infinity" prefHeight="38.0" vgrow="SOMETIMES" />
+                                                <RowConstraints maxHeight="-Infinity" minHeight="-Infinity" prefHeight="38.0" vgrow="NEVER" />
                                             </rowConstraints>
                                              <children>
                                                 <Label text="Tags Defined :" />
@@ -253,11 +254,15 @@
                                                       <Insets bottom="8.0" top="8.0" />
                                                    </GridPane.margin>
                                                 </TextField>
-                                                <Button fx:id="butCreateTag" minWidth="80.0" mnemonicParsing="false" onAction="#create_tag" prefWidth="80.0" text="Create" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.rowIndex="3">
+                                                <TextField fx:id="txtNewTagNote" onKeyPressed="#tagnote_keypressed" promptText="Notes of the Tag (optional)" GridPane.columnSpan="2" GridPane.rowIndex="3" />
+                                                <HBox alignment="CENTER_RIGHT" maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="-Infinity" prefHeight="38.0" GridPane.columnSpan="2" GridPane.rowIndex="4">
                                                    <GridPane.margin>
                                                       <Insets />
                                                    </GridPane.margin>
-                                                </Button>
+                                                   <children>
+                                                      <Button fx:id="butCreateTag" minWidth="80.0" mnemonicParsing="false" onAction="#create_tag" prefWidth="80.0" text="Create" />
+                                                   </children>
+                                                </HBox>
                                              </children>
                                           </GridPane>
                                        </children>
