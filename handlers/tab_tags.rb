@@ -8,11 +8,16 @@ module GvcsFx
       attr_accessor :key, :name, :date, :author, :subject
       def formatted_date
         if not_empty?(@date)
-          dt = DateTime.strptime(@date,"%a %b %d %H:%M:%S %Y %z")
+          dt = rdate
           dt.strftime("%d.%b.%Y (%a) %H:%M %z")
         else
           ""
         end
+      end
+
+      # for sorting
+      def rdate
+        DateTime.strptime(@date,"%a %b %d %H:%M:%S %Y %z")
       end
 
       def to_s
@@ -51,7 +56,7 @@ module GvcsFx
       dat = []
       st, res = @selWs.all_tags
       if st and not_empty?(res)
-        
+       
         res.each_line do |e|
 
           st2,res2 = @selWs.tag_info(e.strip)
@@ -85,12 +90,25 @@ module GvcsFx
             end
           end
 
+        end # tag info line
+
+        # sort 
+        dat = dat.sort do |a,b|
+          case 
+          when a.rdate < b.rdate
+            1
+          when a.rdate > b.rdate
+            -1
+          else
+            a.rdate <=> b.rdate
+          end
         end
 
         @lstTags.items.add_all(dat)
       end
 
       @txtNewTagName.clear
+      @txtNewTagNote.clear
        
     end # refresh_tab_tags
 
@@ -99,9 +117,11 @@ module GvcsFx
       if is_empty?(tn)
         fx_alert_error("Tag name cannot be empty","Empty Tag Name", main_stage)
       else
-        st, res = @selWs.create_tag(tn)
+        msg = @txtNewTagNote.text
+        tn = tn.gsub(" ","-")
+        st, res = @selWs.create_tag(tn,msg)
         if st
-          fx_alert_info("New tag '#{tn}' successfully created.","New Tag Created",main_stage)
+          set_success_gmsg("New tag '#{tn}' successfully created.")
           refresh_tab_tags
         else
           fx_alert_error(res.strip, "New Tag Creation Failed", main_stage)
@@ -110,6 +130,12 @@ module GvcsFx
     end # create_tag
 
     def new_tag_keypressed(evt)
+      if evt.code == javafx.scene.input.KeyCode::ENTER
+        create_tag(nil)
+      end
+    end
+
+    def tagnote_keypressed(evt)
       if evt.code == javafx.scene.input.KeyCode::ENTER
         create_tag(nil)
       end
