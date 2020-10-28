@@ -20,6 +20,11 @@ module GvcsFx
         super("M",path, ftype)
       end
     end
+    class ConflictedFile < VcsElement
+      def initialize(path, ftype)
+        super("C",path, ftype)
+      end
+    end
     class NewFile < VcsElement
       def initialize(path, ftype)
         super("N",path, ftype)
@@ -110,6 +115,7 @@ module GvcsFx
       if not (@selWs.nil?)
 
         mst, mods_dirs, mods_files = @selWs.modified_files
+        cst, cflt_dirs, cflt_files = @selWs.conflicted_files
         nst, news_dirs, news_files = @selWs.new_files
         dst, dels_dirs, dels_files = @selWs.deleted_files
 
@@ -120,6 +126,14 @@ module GvcsFx
         mods_files.each do |f|
           data << ModifiedFile.new(f,:file)
         end
+
+        cflt_dirs.each do |f|
+          data << ConflictedFile.new(f,:dir)
+        end
+        cflt_files.each do |f|
+          data << ConflictedFile.new(f,:file)
+        end
+
         news_dirs.each do |f|
           data << NewFile.new(f,:dir)
         end
@@ -163,23 +177,27 @@ module GvcsFx
     # hooked to the button "not ready to commit just yet..."
     def stash_changes(evt)
       mst, mods_dirs, mods_files = @selWs.modified_files
+      cst, cflt_dirs, cflt_files = @selWs.conflicted_files
       nst, news_dirs, news_files = @selWs.new_files
       dst, dels_dirs, dels_files = @selWs.deleted_files
 
       if mods_dirs.length > 0 or mods_files.length > 0 \
+          or cflt_dirs.length > 0 or cflt_files.length > 0 \
           or news_dirs.length > 0 or news_files.length > 0 \
           or dels_dirs.length > 0 or dels_files.length > 0
 
         msg = []
         msg << "System detected there are existing uncommitted changes in the current workspace:\n"
-        msg << "\tModified folder(s) : \t#{mods_dirs.length}\n"
-        msg << "\tModified file(s) : \t#{mods_files.length}\n"
-        msg << "\tDeleted folder(s) : \t#{dels_dirs.length}\n"
-        msg << "\tDeleted file(s) : \t#{dels_files.length}\n"
-        msg << "\tNew folder(s) : \t#{news_dirs.length}\n"
-        msg << "\tNew file(s) : \t\t#{news_files.length}\n"
+        msg << "\tModified folder(s) : \t\t#{mods_dirs.length}\n"
+        msg << "\tModified file(s) : \t\t#{mods_files.length}\n"
+        msg << "\tConflicted folder(s) : \t#{cflt_dirs.length}\n"
+        msg << "\tConflicted file(s) : \t\t#{cflt_files.length}\n"
+        msg << "\tDeleted folder(s) : \t\t#{dels_dirs.length}\n"
+        msg << "\tDeleted file(s) : \t\t#{dels_files.length}\n"
+        msg << "\tNew folder(s) : \t\t#{news_dirs.length}\n"
+        msg << "\tNew file(s) : \t\t\t#{news_files.length}\n"
 
-        st, name = fx_alert_input("Temporary Save Changes",msg.join, "Please give a descriptive name of this temporary changes.\nIt is recommended but not mandatory")
+        st, name = fx_alert_input("Temporary Save Changes To Branch",msg.join, "Please give a descriptive name of this temporary changes.\nIt is recommended but not mandatory")
         if st
           # this means user click ok, but the text can still be empty
           sst, res = @selWs.stash_changes(name)
@@ -237,10 +255,11 @@ module GvcsFx
           @cmbCommitMsg.items.add(msg)
         else
           reset_add_commit_error(@processed,@emptyDirCommit)
+          log_error("Commit failed. Error was : #{res.strip}")
           prompt_error("Error while committing changes. Error was:\n#{res.strip}", "Commit Error", GvcsFxException)
           #set_err_gmsg("Error while committing changes. Error was:\n#{res.strip}")
         end
-      rescue Exception => ex;
+      rescue Exception => ex
         reset_add_commit_error(@processed,@emptyDirCommit)
       end
     end
