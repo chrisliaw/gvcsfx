@@ -156,6 +156,7 @@ module GvcsFx
         end
       end      
       #@selTag = @lstTags.selection_model.selected_item
+    end
 
     def tagnote_keypressed(evt)
       if evt.code == javafx.scene.input.KeyCode::ENTER
