@@ -30,10 +30,10 @@ module GvcsFx
       @lstTags.selection_model.selection_mode = javafx.scene.control.SelectionMode::SINGLE
  
       @lstTags.add_event_handler(javafx.scene.input.MouseEvent::MOUSE_CLICKED, Proc.new do |evt|
-        #if evt.button == javafx.scene.input.MouseButton::SECONDARY
+        if evt.button == javafx.scene.input.MouseButton::SECONDARY
         #  # right click on item
-        #  branches_ctxmenu.show(@lstBranches, evt.screen_x, evt.screen_y)
-        if evt.button == javafx.scene.input.MouseButton::PRIMARY and evt.click_count == 2
+          tags_ctxmenu.show(@lstTags, evt.screen_x, evt.screen_y)
+        elsif evt.button == javafx.scene.input.MouseButton::PRIMARY and evt.click_count == 2
           # double click on item - view file
           sel = @lstTags.selection_model.selected_items
           if sel.length > 0
@@ -139,17 +139,17 @@ module GvcsFx
 
     def lstTags_keypressed(evt)
       if evt.code == javafx.scene.input.KeyCode::DELETE
-        @selTag = @lstTags.selection_model.selected_item
-        if not @selTag.nil?
-          res = fx_alert_confirmation("Remove tag '#{@selTag.name}'?", nil, "Confirmation to Remove Tag", main_stage)
+        selTag = @lstTags.selection_model.selected_item
+        if not selTag.nil?
+          res = fx_alert_confirmation("Remove tag '#{selTag.name}'?", nil, "Confirmation to Remove Tag", main_stage)
           if res == :ok
-            st, res = @selWs.delete_tag(@selTag.name)
+            st, res = @selWs.delete_tag(selTag.name)
 
             if st
-              set_success_gmsg("Tag '#{@selTag.name}' successfully deleted.")
+              set_success_gmsg("Tag '#{selTag.name}' successfully deleted.")
               refresh_tab_tags
             else
-              prompt_error("Failed to delete tag '#{@selTag.name}'. Error was : #{res}")
+              prompt_error("Failed to delete tag '#{selTag.name}'. Error was : #{res}")
             end
 
           end          
@@ -162,6 +162,42 @@ module GvcsFx
       if evt.code == javafx.scene.input.KeyCode::ENTER
         create_tag(nil)
       end
+    end
+
+    def tags_ctxmenu
+
+      selTag = @lstTags.selection_model.selected_item
+
+      tagsCtxMenu = javafx.scene.control.ContextMenu.new
+
+      if not_empty?(selTag)
+
+        coMnuItm = javafx.scene.control.MenuItem.new("Checkout to new branch")
+        coMnuItm.on_action do |evt|
+
+          st, name = fx_alert_input("Check out to a branch","Check out tag '#{selTag.name}' into new branch", "New Branch Name *")
+          if st
+            if not_empty?(name)
+              sst, res = @selWs.checkout_tag(selTag.name, name)
+              if sst
+                set_success_gmsg(res)
+                refresh_tab_tags
+              else
+                prompt_error("Failed to checkout tag '#{selTag.name}' to new branch '#{name}'. Error was : #{res}")
+              end 
+            else
+              prompt_error("Please provide a branch name")
+            end
+          end
+
+        end  # on_action do .. end
+
+        tagsCtxMenu.items.add(coMnuItm)
+
+      end
+
+      tagsCtxMenu
+      
     end
 
   end
