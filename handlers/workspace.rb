@@ -146,12 +146,15 @@ module GvcsFx
         end
       end
 
+      # project filter
       @cmbWorkspaceProjectFilter.value_property.add_listener(Proc.new do |ov, oldV, newV|
         # Javafx combobox not allow changing of internal value while it is updated
         # if not enclosed in the Platform.run_later() 
         # java.lang.IndexOutOfBoundsException shall be thrown
         Platform.run_later do
+         
           @projectFilter = newV
+
           if not_empty?(newV)
 
             # here shall change the listing of the project
@@ -246,7 +249,7 @@ module GvcsFx
 
       @rootNode.children.clear
 
-      log_debug "#{db.workspaces.length} workspace(s) found"
+      log_debug "#{db.workspaces.length} project(s) found"
 
       if db.workspaces.length > 0
 
@@ -270,6 +273,11 @@ module GvcsFx
         pf = [ALL_PROJ_FILTER]
         pf.concat(db.parent.sort)
         @cmbWorkspaceProjectFilter.items.add_all(pf)
+
+        # this is so far most acceptable version 
+        # if set value will trigger the listener above that shall trigger this method again
+        # become vicious cycle
+        @cmbWorkspaceProjectFilter.prompt_text = @projectFilter if not_empty?(@projectFilter)
 
         #show_details
       else
