@@ -1,6 +1,8 @@
 
 require 'jrubyfx'
 
+require_relative "lib/version"
+
 fxml_root File.join(File.dirname(__FILE__),"fx")
 
 require_relative 'handlers/main_win_controller'

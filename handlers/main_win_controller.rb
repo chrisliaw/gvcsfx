@@ -49,6 +49,9 @@ module GvcsFx
 
 
     def initialize
+
+      @lblVersion.text = "v#{GvcsFx::VERSION}"
+
       # sequence here is important
       install_handler
       init_tblWorkspace
