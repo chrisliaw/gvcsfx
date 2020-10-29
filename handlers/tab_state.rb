@@ -325,6 +325,29 @@ module GvcsFx
         # 
         # View file menu item
         #
+        diffMnuItm = javafx.scene.control.MenuItem.new("Diff")
+        diffMnuItm.on_action do |evt|
+
+          @selChanges.each do |s|
+
+            st, res = @selWs.diff_file(s.path)
+            if st
+              show_content_win("Diff Output", "Diff Result - #{s.path}", res)
+            else
+              prompt_error("Diff for '#{s.path}' failed. [#{res}]")
+            end
+            
+          end
+
+        end
+        @changesCtxMenu.items.add(diffMnuItm)
+        # 
+        # end diff menu item
+        #
+
+        # 
+        # View file menu item
+        #
         vfMnuItm = javafx.scene.control.MenuItem.new("View file")
         vfMnuItm.on_action do |evt|
 
