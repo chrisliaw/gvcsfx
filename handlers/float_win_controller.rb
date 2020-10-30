@@ -1,6 +1,5 @@
 
 java_import javafx.scene.control.ContextMenu
-java_import javafx.scene.control.MenuItem
 
 require_relative "main_win_controller"
 
@@ -25,7 +24,7 @@ module GvcsFx
 
         @ctx = ContextMenu.new
         mnuItems = []
-        @mnuMain = MenuItem.new("G-VCS")
+        @mnuMain = javafx.scene.control.MenuItem.new("G-VCS")
         @mnuMain.on_action do |evt|
          stage = javafx.stage.Stage.new
           stage.title = "G-VCS"
@@ -36,7 +35,7 @@ module GvcsFx
         end
         mnuItems << @mnuMain
 
-        @mnuExit = MenuItem.new("Exit")
+        @mnuExit = javafx.scene.control.MenuItem.new("Exit")
         @mnuExit.on_action do |evt|
           @imgFloat.scene.window.close 
         end
