@@ -132,11 +132,16 @@ module GvcsFx
           
           if newV.value.is_a?(TreeWorkspace) and not_empty?(newV.value.workspace)
 
-            # Here shall set a global reference to the selected workspace @selWs
-            @selWs = Gvcs::Workspace.new(Global.instance.vcs, newV.value.workspace.path) 
+            if File.exist?(newV.value.workspace.path)
+              # Here shall set a global reference to the selected workspace @selWs
+              @selWs = Gvcs::Workspace.new(Global.instance.vcs, newV.value.workspace.path) 
 
-            refresh_details
-            show_details
+              refresh_details
+              show_details
+            else
+              show_landing
+              prompt_error("Workspace '#{newV.value.workspace.path}' does not exist anymore.\nPlease remove it from workspace.")
+            end
 
           else
             show_landing
