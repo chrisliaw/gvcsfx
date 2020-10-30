@@ -55,22 +55,38 @@ module GvcsFx
       case type
       when :err
         if @errImg.nil?
-          @errImg = javafx.scene.image.Image.new("res/cross.png")
+          if inside_jar?
+            @errImg = javafx.scene.image.Image.new(java.lang.Object.new.java_class.resource("/gvcsfx/res/cross.png").to_s)
+          else
+            @errImg = javafx.scene.image.Image.new("res/cross.png")
+          end
         end
         @errImg
       when :warn
         if @warnImg.nil?
-          @warnImg = javafx.scene.image.Image.new("res/warn.png")
+          if inside_jar?
+            @warnImg = javafx.scene.image.Image.new(java.lang.Object.new.java_class.resource("/gvcsfx/res/warn.png").to_s)
+          else
+            @warnImg = javafx.scene.image.Image.new("res/warn.png")
+          end
         end
         @warnImg
       when :success
         if @sucImg.nil?
-          @sucImg = javafx.scene.image.Image.new("res/tick.png")
+          if inside_jar?
+            @sucImg = javafx.scene.image.Image.new(java.lang.Object.new.java_class.resource("/gvcsfx/res/tick.png").to_s)
+          else
+            @sucImg = javafx.scene.image.Image.new("res/tick.png")
+          end
         end
         @sucImg
       else
         if @infoImg.nil?
-          @infoImg = javafx.scene.image.Image.new("res/world.png")
+          if inside_jar?
+            @infoImg = javafx.scene.image.Image.new(java.lang.Object.new.java_class.resource("/gvcsfx/res/world.png").to_s)
+          else
+            @infoImg = javafx.scene.image.Image.new("res/world.png")
+          end
         end
         @infoImg
       end
