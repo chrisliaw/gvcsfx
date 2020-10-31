@@ -24,6 +24,7 @@ Other features includes:
     * Add extension/files into .gitignore
     * Revert changes of particular files from HEAD
     * Take the file out from version control (wrongly check in)
+  * Stash existing changes and restore the stash (at branch tab) into new branch instead of the original branch
 * Ignore rules (.gitignore)
   * Text editor free editing of the rules
 * Branches
