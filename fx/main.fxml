@@ -300,7 +300,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                                                             <Insets bottom="5.0" left="5.0" top="5.0" />
                                                          </padding>
                                                       </Label>
-                                                      <TextField fx:id="txtLogLimit" alignment="CENTER" onKeyReleased="#refresh_log" promptText="Log limit" />
+                                                      <TextField fx:id="txtLogLimit" alignment="CENTER" onKeyPressed="#loglimit_keypressed" promptText="Log limit" />
                                                    </children>
                                                 </HBox>
                                                 <TableView fx:id="tblLogs" VBox.vgrow="ALWAYS">

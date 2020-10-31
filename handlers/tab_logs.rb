@@ -178,6 +178,12 @@ module GvcsFx
       end
     end # refresh_tab_logs
 
+    def loglimit_keypressed(evt)
+      if (not evt.nil?) and evt.code == javafx.scene.input.KeyCode::ENTER
+        refresh_tab_logs
+      end
+    end
+
     private
     def logs_ctxmenu
 
