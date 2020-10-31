@@ -96,14 +96,18 @@ module GvcsFx
 
         # sort 
         dat = dat.sort do |a,b|
-          case 
-          when a.rdate < b.rdate
-            1
-          when a.rdate > b.rdate
-            -1
-          else
-            a.rdate <=> b.rdate
-          end
+          # oldest comes to the top
+          #a.rdate <=> b.rdate
+          # latest comes to the top
+          b.rdate <=> a.rdate
+          #case 
+          #when a.rdate < b.rdate
+          #  1
+          #when a.rdate > b.rdate
+          #  -1
+          #else
+          #  a.rdate <=> b.rdate
+          #end
         end
 
         @lstTags.items.add_all(dat)
