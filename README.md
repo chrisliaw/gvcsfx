@@ -57,6 +57,14 @@ To be implemented
 * Sort by date/committer on logs
 
 
+Development
+===========
+
+System is developed on
+* jruby-9.2.9.0 (2.5.7)
+* Oracle JDK 1.8.0\_261 
+
+
 
 
 
