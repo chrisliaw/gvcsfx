@@ -79,6 +79,12 @@ module GvcsFx
       init_tab_branches
       init_tab_tags
 
+      # hide the other not yet completed tab
+      @tabPnlDetails.tabs.remove(@tabWsFiles)
+      @tabPnlDetails.tabs.remove(@tabWsConflict)
+      @tabPnlDetails.tabs.remove(@tabWsAction)
+      @tabPnlDetails.tabs.remove(@tabWsConfig)
+
       show_landing
     end
 
