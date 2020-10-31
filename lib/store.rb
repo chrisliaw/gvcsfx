@@ -54,6 +54,16 @@ module GvcsFx
             end
 
             obj = YAML.load(@cont)
+
+            obj.parent.sort!
+
+            # sort the workspace's path
+            obj.workspaces.each do |k,v|
+              obj.workspaces[k] = v.sort_by(&:path)
+            end
+
+            obj
+
           rescue Exception => ex
             Global.instance.logger.error ex.message
             Global.instance.logger.error "Failed to load store from '#{path}'. Returning new instance."
