@@ -1,0 +1,13 @@
+#! /usr/bin/env ruby
+
+require 'bundler'
+
+if (RUBY_PLATFORM =~ /java/) == nil
+  STDERR.puts "GvcsFX required JRuby to be installed. Please installed the JRuby  and try again (switch to jruby first before run gvcsfx if you're using rvm)"
+else
+  require File.join(File.dirname(__FILE__),"gvcsfx.rb")
+end
+
+
+
+
