@@ -4,3 +4,4 @@ Gemfile.lock
 fx/.jrubyfx_cache/
 gvcsfx.jar
 gvcsfx-0.3.jar
+pkg/
