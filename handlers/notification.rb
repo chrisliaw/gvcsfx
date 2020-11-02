@@ -74,7 +74,7 @@ module GvcsFx
           if inside_jar?
             @errImg = javafx.scene.image.Image.new(java.lang.Object.new.java_class.resource("/gvcsfx/res/cross.png").to_s)
           else
-            @errImg = javafx.scene.image.Image.new("res/cross.png")
+            @errImg = javafx.scene.image.Image.new(File.join("file://",File.dirname(__FILE__),"..","res/cross.png"))
           end
         end
         @errImg
@@ -83,7 +83,7 @@ module GvcsFx
           if inside_jar?
             @warnImg = javafx.scene.image.Image.new(java.lang.Object.new.java_class.resource("/gvcsfx/res/warn.png").to_s)
           else
-            @warnImg = javafx.scene.image.Image.new("res/warn.png")
+            @warnImg = javafx.scene.image.Image.new(File.join("file://",File.dirname(__FILE__),"..","res/warn.png"))
           end
         end
         @warnImg
@@ -92,7 +92,7 @@ module GvcsFx
           if inside_jar?
             @sucImg = javafx.scene.image.Image.new(java.lang.Object.new.java_class.resource("/gvcsfx/res/tick.png").to_s)
           else
-            @sucImg = javafx.scene.image.Image.new("res/tick.png")
+            @sucImg = javafx.scene.image.Image.new(File.join("file://",File.dirname(__FILE__),"..","res/tick.png"))
           end
         end
         @sucImg
@@ -101,7 +101,7 @@ module GvcsFx
           if inside_jar?
             @infoImg = javafx.scene.image.Image.new(java.lang.Object.new.java_class.resource("/gvcsfx/res/world.png").to_s)
           else
-            @infoImg = javafx.scene.image.Image.new("res/world.png")
+            @infoImg = javafx.scene.image.Image.new(File.join("file://",File.dirname(__FILE__),"..","res/world.png"))
           end
         end
         @infoImg
