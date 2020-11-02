@@ -57,6 +57,26 @@ To be implemented
 * Sort by date/committer on logs
 
 
+Installation
+============
+
+You can check out the source code here and run
+
+```sh
+> bundle
+> bundle exec ruby bin/gvcsfx.rb
+```
+
+Or use gem to install the tool:
+
+```ruby
+> gem install gvcsfx
+> (if you use RVM, switch to jruby first)
+> rvm use jruby
+> gvcsfx
+```
+
+
 Development
 ===========
 
