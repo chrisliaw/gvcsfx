@@ -225,7 +225,7 @@ module GvcsFx
       dc.title = "Select Local Repository"
       wsDir = dc.showDialog(main_stage)
 
-      @txtReposUrl.text = wsDir.absolute_path
+      @txtReposUrl.text = wsDir.absolute_path if not_empty?(wsDir)
     end
 
     def repos_pull(evt)
