@@ -345,46 +345,50 @@ module GvcsFx
       dc.title = "Select VCS Workspace"
       wsDir = dc.showDialog(main_stage)
 
-      @txtWorkspacePath.text = wsDir.absolute_path
+      @txtWorkspacePath.text = wsDir.absolute_path if not_empty?(wsDir)
     end
 
     private
     def dnd_dropped(evt)
       f = evt.dragboard.files
-      vcs = Gvcs::Vcs.new
-      ws = []
-      nws = []
-      f.each do |ff|
-        log_debug "Checking drop in path '#{ff.absolute_path}'"
-        st, path = Gvcs::Workspace.new(vcs, ff.absolute_path).workspace_root
-        if st
-          # workspace!
-          ws << path.strip
-        else
-          # not a workspace
-          nws << ff.absolute_path
+      if not_empty?(f)
+
+        vcs = Gvcs::Vcs.new
+        ws = []
+        nws = []
+        f.each do |ff|
+          log_debug "Checking drop in path '#{ff.absolute_path}'"
+          st, path = Gvcs::Workspace.new(vcs, ff.absolute_path).workspace_root
+          if st
+            # workspace!
+            ws << path.strip
+          else
+            # not a workspace
+            nws << ff.absolute_path
+          end
         end
-      end
 
-      ws.each do |w|
-        log_debug "Adding workspace '#{w}'"
-        add_workspace(w)
-        set_success_gmsg("Workspace '#{w}' added to list")
-      end 
-
-      failed = { }
-      nws.each do |w|
-        log_debug "Adding non workspace '#{w}'"
-        st, res = vcs.init(w)  
-        if st
+        ws.each do |w|
+          log_debug "Adding workspace '#{w}'"
           add_workspace(w)
-          set_success_gmsg("Non-workspace '#{w}' added to list")
-        else
-          failed[w] = res
-        end
-      end
+          set_success_gmsg("Workspace '#{w}' added to list")
+        end 
 
-      raise_event(Listener::Event[:workspace_added])
+        failed = { }
+        nws.each do |w|
+          log_debug "Adding non workspace '#{w}'"
+          st, res = vcs.init(w)  
+          if st
+            add_workspace(w)
+            set_success_gmsg("Non-workspace '#{w}' added to list")
+          else
+            failed[w] = res
+          end
+        end
+
+        raise_event(Listener::Event[:workspace_added])
+
+      end
 
     end # dnd_dropped
 
