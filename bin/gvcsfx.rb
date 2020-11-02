@@ -37,6 +37,7 @@ module GvcsFx
     def start(stage)
       
       @stage = stage
+      @stage.title = "GVCS Main"
       #@stage.always_on_top = true
       #@stage.init_style = javafx.stage.StageStyle::UNDECORATED
       #javafx.application.Platform.implicit_exit = false
